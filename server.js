@@ -69,40 +69,60 @@ app.get("/about", function(req,res){
 })
 
 app.get("/employees/add", function(req,res){
-    res.render('addEmployee');
+    dataService.getDepartments()
+    .then((data)=>{
+        res.render('addEmployee', {departments:data});
+    })
+    .catch((err)=>{
+        res.render("addEmployee", {departments:[]})
+    })
 })
 
 app.get("/employees", (req, res)=>{
    if (req.query.status){
        dataService.getEmployeesByStatus(req.query.status)
        .then((data)=>{
-           if (employees.length>0){
+           if (data.length>0){
             res.render("employees",{employees:data});
+        }else{
+            console.log("returning msg");
             res.render("employees", {message: "no results"});
            }
        }).catch((err)=>{
-           res.render("employees",{message:"no results"});
+        res.status(500).send("Unable to Get Employee by Status");
        })
    }else if (req.query.department){
        dataService.getEmployeesByDepartment(req.query.department)
        .then((data)=>{
-           res.render("employees",{employees:data});
+            if (data.length>0){
+                res.render("employees",{employees:data});
+            }else{
+                res.render("employees", {message: "no results"});
+        }
        }).catch((err)=>{
-           res.render("employees",{message:"no results"});
+            res.status(500).send("Unable to Get Employee by department");
        })
    }else if (req.query.manager){
         dataService.getEmployeesByManager(req.query.manager)
         .then((data)=>{
-            res.render("employees",{employees:data});
+            if (data.length>0){
+                res.render("employees",{employees:data});
+            }else{
+                res.render("employees", {message: "no results"});
+        }
         }).catch((err)=>{
-            res.render("employees",{message:"no results"});
+            res.status(500).send("Unable to Get Employee by manager");
         })
    } else {
         dataService.getAllEmployees()
         .then((data)=>{
-            res.render("employees", {employees: data});
-        }).catch((msg)=>{
-            res.render("employees",{message:"no results"});
+            if (data.length>0){
+                res.render("employees",{employees:data});
+            }else{
+                res.render("employees", {message: "no results"});
+        }
+        }).catch((err)=>{
+            res.status(500).send("Unable to Get Employees");
         })
     }
 });
@@ -110,24 +130,67 @@ app.get("/employees", (req, res)=>{
 app.get("/departments", function(req, res){
     dataService.getDepartments()
     .then((data)=>{
-        res.render("departments",{departments:data});
+        if (data.length>0){
+            res.render("departments",{departments:data});
+        }else{
+            res.render("departments",{message:"no results"})
+        }
     })
     .catch((msg)=>{
-        res.send("departments",{message:"no results"})
+        res.status(500).send("Unable to Get Departments");
     })
 });
-app.get("/employee/:empNum",function(req,res){
-    dataService.getEmployeesByNum(req.params.empNum)
-    .then((data)=>{
-       res.render("employee",{employee:data});    
-    })
-    .catch((msg)=>{
-        res.render("employee", {message:"no results"});
-    })
+app.get("/employee/:empNum", (req, res) => {
+
+    // initialize an empty object to store the values
+    let viewData = {};
+
+    dataService.getEmployeesByNum(req.params.empNum).then((data) => {
+        console.log("bynum data  "+data)
+        if (data) {
+            viewData.employee = data; //store employee data in the "viewData" object as "employee"
+        } else {
+            viewData.employee = null; // set employee to null if none were returned
+        }
+    }).catch(() => {
+        viewData.employee = null; // set employee to null if there was an error 
+    }).then(dataService.getDepartments)
+    .then((data) => {
+        viewData.departments = data; // store department data in the "viewData" object as "departments"
+
+        // loop through viewData.departments and once we have found the departmentId that matches
+        // the employee's "department" value, add a "selected" property to the matching 
+        // viewData.departments object
+
+        for (let i = 0; i < viewData.departments.length; i++) {
+            if (viewData.departments[i].departmentId == viewData.employee.department) {
+                viewData.departments[i].selected = true;
+            }
+        }
+
+    }).catch(() => {
+        viewData.departments = []; // set departments to empty if there was an error
+    }).then(() => {
+        if (viewData.employee == null) { // if no employee - return an error
+            res.status(404).send("Employee Not Found");
+        } else {
+            res.render("employee", { viewData: viewData }); // render the "employee" view
+        }
+    });
 });
 
+
+app.get("/employees/delete/:empNum",(req,res)=>{
+    dataService.deleteEmployeeByNum(req.params.empNum)
+    .then(()=>{
+        res.redirect("/employees")
+    })
+    .catch(()=>{
+        res.status(500).send("Unable to Remove EMployee/ Employee Not Found");
+    })
+})
 app.get("/departments/add", (req,res)=>{
-    dataService.a
+    res.render("addDepartment");
 })
 
 app.get("/images/add", function(req,res){
@@ -136,6 +199,21 @@ app.get("/images/add", function(req,res){
 app.get("/images",function(req,res){
     fs.readdir("./public/images/uploaded",function(err,items){
         res.render("images",{pictures:items});
+    })
+})
+app.get("/departments/:depId",(req,res)=>{
+    dataService.getDepartmentById(req.params.depId)
+    .then((data)=>{
+        if (data.length>0){
+            console.log("worked")
+            res.render("department",{department:data[0]});
+        } else{
+            console.log("success but fail")
+            res.status(404).send("Department Not Found-but getbyidworks");
+        }
+    })
+    .catch((msg)=>{
+        res.status(500).send("Unable to Get Department by Id");
     })
 })
 app.post("/images/add",upload.single("imageFile"),(req,res)=>{
@@ -147,18 +225,37 @@ app.post("/employee/update",(req,res)=>{
     .then((data)=>{
         res.redirect("/employees");
     }).catch((msg)=>{
-        console.log(msg);
+        res.status(500).send("Unable to update employe");
     })
 })
 app.post("/employees/add",(req,res)=>{
     dataService.addEmployee(req.body)
     .then((data)=>{
-        res.send(data);
+        res.redirect("/employees")
     })
     .catch((msg)=>{
-        console.log(msg);
+        res.status(500).send("Unable to Add Employee");
     })
 })
+app.post("/departments/add",(req,res)=>{
+    dataService.addDepartment(req.body)
+    .then((data)=>{
+        res.redirect("/departments")
+    })
+    .catch((msg)=>{
+        res.status(500).send("Unable to Add department");
+    })
+})
+app.post("/departments/update",(req,res)=>{
+    dataService.updateDepartment(req.body)
+    .then((data)=>{
+        res.redirect("/departments")
+    })
+    .catch((msg)=>{
+        res.status(500).send("Unable to update departments");
+    })
+})
+
 app.use((req,res)=>{
     res.status(404).send("Page not found");
 })
@@ -169,5 +266,5 @@ dataService.initialize()
     app.listen(HTTP_PORT, onHttpStart);
 })
 .catch(function(msg){
-    console.log(msg);
+    res.status(500).send("Unable to Get Employee by Status");
 })

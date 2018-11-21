@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
-var sequelize =new Sequelize('dbudq477an8lbp','wcgfxewndtvytz', '54defb036c25c84e01d1f24b711d4db536b3c194ae4dbe83a968bab46691a202', {
-    host: 'ec2-23-23-101-25.compute-1.amazonaws.com',
+var sequelize =new Sequelize('dap83gean1ede8','tnyfduvtcupyeg', '2e831653993eb088b97b2559554c3892cd52b850a14d4c6647202ca7c16e2044', {
+    host: 'ec2-54-235-212-58.compute-1.amazonaws.com',
     dialect: 'postgres',
     port: 5432,
     dialectOptions: {
@@ -49,37 +49,22 @@ sequelize.authenticate().then(()=> console.log('Connection success.'))
 module.exports.initialize= function(){
     return new Promise(function(resolve, reject){
         sequelize.sync().then(()=>{
-            Employees.create({
-                title: 'Employee1',
-                description: 'BTI300'
-            }).then(function(Employees){
-                console.log("Employees Syncd with DB, now Departments")
-                Departments.create({
-                    title:'Departments1',
-                    description: 'bti300'
-                }).then(function(Departments){
-                    console.log("departments syncd");
-                    resolve();
-                }).catch(function(err){
-                    reject("unable to sync with DB");
-                })
-            }).catch(function(err){
+            resolve();
+        }).catch(function(err){
                 reject("unable to sync with db");
-            })
         })
-    }
-)}
+    })
+}
 module.exports.getAllEmployees= function(){
-    return new Promise(function(resolve, reject){
-        sequelize.sync().then(function(){
-            Employees.findAll({})
+    return new Promise((resolve, reject)=>{
+            Employees.findAll()
             .then((data)=>{
+                console.log(data)
                 resolve(data);
-            }).catch(function(err){
+            }).catch((err)=>{
                 reject("getAll failed");
             })
         })
-    })
 }
 module.exports.getDepartments= function(){
     return new Promise(function(resolve, reject){
@@ -97,30 +82,16 @@ module.exports.addEmployee= function(employeeData){
     return new Promise(function(resolve,reject){
         employeeData.isManager = (employeeData.isManager) ? true : false;
         for (const val in employeeData){
-            if (employeeData.val== null){
-                employeeData.val="";
+            if (employeeData[val]== ""){
+                employeeData[val]=null;
             }
         }
         sequelize.sync().then(()=>{
-            Employees.create({
-                employeeNum: employeeData.employeeNum,
-                firstName: employeeData.firstName,
-                lastName: employeeData.lastName,
-                email: employeeData.email,
-                SSN: employeeData.SSN,
-                addressCity:employeeData.addressCity,
-                addressState: employeeData.addressState,
-                addressPostal: employeeData.addressPostal,
-                maritalStatus: employeeData.maritalStatus,
-                isManager: employeeData.isManager,
-                employeeManagerNum:employeeData.employeeManagerNum,
-                status: employeeData.status,
-                department: employeeData.department,
-                hireDate: employeeData.hireDate
-            }).then(()=>{
+            Employees.create(employeeData).then(()=>{
+                console.log("added")
                 resolve("employee Added");
-            }).catch(()=>{
-                console.log("emp add fail")
+            }).catch((err)=>{
+                console.log("emp add fail" + err)
                 reject("Employee Add Failed");
             })
         })
@@ -142,6 +113,7 @@ module.exports.getEmployeesByStatus= function(empStatus){
 }
 module.exports.getEmployeesByDepartment= function(dept){
     return new Promise(function(resolve,reject){
+        
         sequelize.sync().then(function(){
             Employees.findAll({
                 where: {department:dept}
@@ -172,7 +144,7 @@ module.exports.getEmployeesByNum= function(num){
             Employees.findAll({
                 where: {employeeNum:num}
             }).then((data)=>{
-                resolve(data);
+                resolve(data[0]);
             }).catch((err)=>{
                 reject("no emps found");
             })
@@ -183,33 +155,89 @@ module.exports.updateEmployee= function(employeeData){
     return new Promise(function(resolve,reject){
         employeeData.isManager = (employeeData.isManager) ? true : false;
         for (const val in employeeData){
-            if (employeeData.val== null){
-                employeeData.val="";
+            if (employeeData.val== ""){
+                employeeData.val=null;
             }
         }
         sequelize.sync().then(()=>{
-            Employees.update({
-                employeeNum: employeeData.employeeNum,
-                firstName: employeeData.firstName,
-                lastName: employeeData.lastName,
-                email: employeeData.email,
-                SSN: employeeData.SSN,
-                addressCity:employeeData.addressCity,
-                addressState: employeeData.addressState,
-                addressPostal: employeeData.addressPostal,
-                maritalStatus: employeeData.maritalStatus,
-                isManager: employeeData.isManager,
-                employeeManagerNum:employeeData.employeeManagerNum,
-                status: employeeData.status,
-                department: employeeData.department,
-                hireDate: employeeData.hireDate
-            },{
+            Employees.update(employeeData
+            ,{
                 where: {employeeNum: employeeData.employeeNum}
             }).then(()=>{
-                resolve("employee Added");
-            }).catch(()=>{
+                resolve();
+            }).catch((err)=>{
                 console.log("emp add fail")
                 reject("Employee Update Failed");
+            })
+        })
+    })
+}
+module.exports.addDepartment=function(departmentData){
+    return new Promise(function(resolve,reject){
+        for (const val in departmentData){
+            if (departmentData.val== ""){
+                departmentData.val=null;
+            }
+        }
+        sequelize.sync().then(()=>{
+            Departments.create(departmentData).then(()=>{
+                resolve("department Added");
+            }).catch((err)=>{
+                console.log("dep add fail")
+                reject("department Add Failed");
+            })
+        })
+       
+    })
+}
+module.exports.updateDepartment=function(departmentData){
+    return new Promise(function(resolve,reject){
+        for (const val in departmentData){
+            if (departmentData[val]== ""){
+                departmentData[val]=null;
+            }
+        }
+        sequelize.sync().then(()=>{
+            Departments.update(departmentData
+            ,{
+                where: {departmentId: departmentData.departmentId}
+            }).then((data)=>{
+                console.log("dep update success")
+                resolve();
+            }).catch((err)=>{
+                console.log("dep add fail")
+                reject("department Update Failed");
+            })
+        })
+       
+    })
+}
+module.exports.getDepartmentById= function(num){
+    return new Promise(function(resolve,reject){
+        console.log("inside gebyid"+ num)
+        sequelize.sync().then(function(){
+            Departments.findAll({
+                where: {departmentId:num}
+            }).then((data)=>{
+                resolve(data);
+            }).catch((err)=>{
+                reject("no results found");
+            })
+        })
+    })
+}
+module.exports.deleteEmployeeByNum=function(empNum){
+    console.log(empNum)
+    return new Promise(function(resolve,reject){
+        sequelize.sync().then(()=>{
+            Employees.destroy({
+                where: {employeeNum:empNum}
+            }).then(()=>{
+                console.log("deleted")
+                resolve();
+            }).catch((err)=>{
+                console.log("delete failed")
+                reject();
             })
         })
     })
