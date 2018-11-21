@@ -97,9 +97,9 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="department">Department:</label>
-                            {{#if department}}
+                            {{#if viewData.departments}}
                                 <select class="form-control" name="department" id="department">
-                                {{#each department}}
+                                {{#each viewData.departments}}
                                     <option value="{{departmentId}}" {{#if selected}} selected {{/if}} >{{departmentName}} </option>
                                 {{/each}}
                                 </select>
@@ -113,7 +113,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="hireDate">Hire Date:</label>
-                            <input class="form-control" id="hireDate" name="hireDate" type="text" value="{{employee.hireDate}}"" readonly>
+                            <input class="form-control" id="hireDate" name="hireDate" type="text" value="{{viewData.employee.hireDate}}"" readonly>
                         </div>
                     </div>
                 </div>

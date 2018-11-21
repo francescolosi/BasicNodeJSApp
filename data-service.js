@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
-var sequelize =new Sequelize('dap83gean1ede8','tnyfduvtcupyeg', '2e831653993eb088b97b2559554c3892cd52b850a14d4c6647202ca7c16e2044', {
-    host: 'ec2-54-235-212-58.compute-1.amazonaws.com',
+var sequelize =new Sequelize('de4rdtddtptkmf','xiwxvvhvmtdzhi', '038c15dd5b5ed4d506fd794a8b0103c28a10e950acf845b67ea16dd0ec3467f5', {
+    host: 'ec2-54-235-193-0.compute-1.amazonaws.com',
     dialect: 'postgres',
     port: 5432,
     dialectOptions: {
@@ -59,7 +59,6 @@ module.exports.getAllEmployees= function(){
     return new Promise((resolve, reject)=>{
             Employees.findAll()
             .then((data)=>{
-                console.log(data)
                 resolve(data);
             }).catch((err)=>{
                 reject("getAll failed");
@@ -152,21 +151,21 @@ module.exports.getEmployeesByNum= function(num){
     })
 }
 module.exports.updateEmployee= function(employeeData){
+    console.log("updateemp ")
+    console.log(employeeData);
     return new Promise(function(resolve,reject){
         employeeData.isManager = (employeeData.isManager) ? true : false;
         for (const val in employeeData){
             if (employeeData.val== ""){
                 employeeData.val=null;
             }
-        }
-        sequelize.sync().then(()=>{
+        }sequelize.sync().then(()=>{
             Employees.update(employeeData
             ,{
                 where: {employeeNum: employeeData.employeeNum}
-            }).then(()=>{
-                resolve();
-            }).catch((err)=>{
-                console.log("emp add fail")
+            }).then(()=>{resolve();})
+            .catch((err)=>{
+                console.log("emp update fail")
                 reject("Employee Update Failed");
             })
         })
@@ -214,7 +213,6 @@ module.exports.updateDepartment=function(departmentData){
 }
 module.exports.getDepartmentById= function(num){
     return new Promise(function(resolve,reject){
-        console.log("inside gebyid"+ num)
         sequelize.sync().then(function(){
             Departments.findAll({
                 where: {departmentId:num}
@@ -227,7 +225,6 @@ module.exports.getDepartmentById= function(num){
     })
 }
 module.exports.deleteEmployeeByNum=function(empNum){
-    console.log(empNum)
     return new Promise(function(resolve,reject){
         sequelize.sync().then(()=>{
             Employees.destroy({

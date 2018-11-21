@@ -1,14 +1,14 @@
 /*********************************************************************************
-*  BTI325 – Assignment 4
+*  BTI325 – Assignment 5
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part 
 *  of this assignment has been copied manually or electronically from any other source 
 *  (including 3rd party web sites) or distributed to other students.
 * 
-*  Name: Francesco Losi Student ID: 015202153 Date: November 6, 2018
+*  Name: Francesco Losi Student ID: 015202153 Date: Oct 20/2018
 *
-*  Online (Heroku) Link: https://sleepy-atoll-23400.herokuapp.com/
+*  Online (Heroku) Link: 
 *
-********************************************************************************/ 
+********************************************************************************/  
 
 var HTTP_PORT = process.env.PORT ||8080;
 var express = require("express");
@@ -146,7 +146,6 @@ app.get("/employee/:empNum", (req, res) => {
     let viewData = {};
 
     dataService.getEmployeesByNum(req.params.empNum).then((data) => {
-        console.log("bynum data  "+data)
         if (data) {
             viewData.employee = data; //store employee data in the "viewData" object as "employee"
         } else {
@@ -205,7 +204,6 @@ app.get("/departments/:depId",(req,res)=>{
     dataService.getDepartmentById(req.params.depId)
     .then((data)=>{
         if (data.length>0){
-            console.log("worked")
             res.render("department",{department:data[0]});
         } else{
             console.log("success but fail")
@@ -221,6 +219,7 @@ app.post("/images/add",upload.single("imageFile"),(req,res)=>{
 })
 
 app.post("/employee/update",(req,res)=>{
+    console.log("in emp update route ")
     dataService.updateEmployee(req.body)
     .then((data)=>{
         res.redirect("/employees");
@@ -262,7 +261,6 @@ app.use((req,res)=>{
 
 dataService.initialize()
 .then((data)=>{
-    console.log(data);
     app.listen(HTTP_PORT, onHttpStart);
 })
 .catch(function(msg){
